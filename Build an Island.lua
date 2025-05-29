@@ -74,6 +74,7 @@ local Tabs = {
     Main = Window:AddTab({ Title = "Auto Farm", Icon = "home" }),
     Craft = Window:AddTab({ Title = "Auto Craft", Icon = "wrench" }),
     Collect = Window:AddTab({ Title = "Auto Collect", Icon = "archive" }),
+    Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
     AntiAfk = Window:AddTab({ Title = "Anti-Afk", Icon = "clock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -103,11 +104,14 @@ do
 
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local ResourcesFolder = ReplicatedStorage:WaitForChild("Storage"):WaitForChild("Resources")
+
+    --[[
     local dropdownValues = {}
     for _, child in ipairs(ResourcesFolder:GetChildren()) do
         table.insert(dropdownValues, child.Name)
     end
 
+    -- Multi-select dropdown
     local resouresmulti = Tabs.Main:AddDropdown("resouresmulti", {
         Title = "Select Resources",
         Values = dropdownValues,
@@ -115,43 +119,25 @@ do
         Default = {}, 
     })
 
+    -- Store selected values
+    local SelectedValues = {}
     resouresmulti:OnChanged(function(Value)
-        Values = {}
-        for Value, State in next, Value do
-            table.insert(Values, Value)
-        end
-        print("Mutlidropdown changed:", table.concat(Values, ", "))
-    end)
-
-    local AutoFarmSelected = Tabs.Main:AddToggle("AutoFarmSelected", {Title = "Farm Selected Resources", Default = false })
-    local function closest_selected_resource(resources)
-        local character = game.Players.LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
-
-        local root = character.HumanoidRootPart
-        local closest = nil
-        local shortestDistance = math.huge
-
-        for _, resource in pairs(resources) do
-            if resource:GetAttribute("HP") and resource:GetAttribute("HP") > 0 then
-                for _, v in ipairs(Values) do
-                    if resource.Name == v then
-                        local resourceRoot = resource:FindFirstChild("Root")
-                        if resourceRoot and resourceRoot:IsA("BasePart") then
-                            local distance = (root.Position - resourceRoot.Position).Magnitude
-                            if distance < shortestDistance then
-                                shortestDistance = distance
-                                closest = resource
-                            end
-                        end
-                        break
-                    end
-                end
+        SelectedValues = {}
+        for resourceName, isSelected in next, Value do
+            if isSelected then
+                table.insert(SelectedValues, resourceName)
             end
         end
+        print("Selected Resources:", table.concat(SelectedValues, ", "))
+    end)
 
-        return closest
-    end
+    -- Toggle for autofarming selected
+    local AutoFarmSelected = Tabs.Main:AddToggle("AutoFarmSelected", {
+        Title = "Farm Selected Resources",
+        Default = false
+    })
+
+    -- Auto farm loop for selected resources only
     AutoFarmSelected:OnChanged(function()
         task.spawn(function()
             while Options.AutoFarmSelected.Value do
@@ -160,46 +146,29 @@ do
                 local myPlot = plots:FindFirstChild(playerName)
 
                 if myPlot and myPlot:FindFirstChild("Resources") then
-                    local resource = closest_selected_resource(myPlot.Resources:GetChildren())
-                    while resource and resource:GetAttribute("HP") and resource:GetAttribute("HP") > 0 do
-                        game:GetService("ReplicatedStorage")
-                            :WaitForChild("Communication")
-                            :WaitForChild("HitResource")
-                            :FireServer(resource)
-                        task.wait(0.1)
+                    for _, resource in ipairs(myPlot.Resources:GetChildren()) do
+                        for _, selectedName in ipairs(SelectedValues) do
+                            if resource.Name == selectedName then
+                                ReplicatedStorage:WaitForChild("Communication")
+                                    :WaitForChild("HitResource")
+                                    :FireServer(resource)
+                            end
+                        end
                     end
                 end
-
-                task.wait(0.1)
+                task.wait(0.01)
             end
         end)
     end)
+
     Options.AutoFarmSelected:SetValue(false)
+    ]]
 
-    local AutoFarm = Tabs.Main:AddToggle("AutoFarm", {Title = "Farm All", Description = "This will farm the closest resources to you", Default = false })
-    local function closest_resource(resources)
-        local character = game.Players.LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+    local AutoFarm = Tabs.Main:AddToggle("AutoFarm", {
+        Title = "Instant Farm All",
+        Default = false
+    })
 
-        local root = character.HumanoidRootPart
-        local closest = nil
-        local shortestDistance = math.huge
-
-        for _, resource in pairs(resources) do
-            if resource:GetAttribute("HP") and resource:GetAttribute("HP") > 0 then
-                local resourceRoot = resource:FindFirstChild("Root")
-                if resourceRoot and resourceRoot:IsA("BasePart") then
-                    local distance = (root.Position - resourceRoot.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        closest = resource
-                    end
-                end
-            end
-        end
-
-        return closest
-    end
     AutoFarm:OnChanged(function()
         task.spawn(function()
             while Options.AutoFarm.Value do
@@ -208,24 +177,27 @@ do
                 local myPlot = plots:FindFirstChild(playerName)
 
                 if myPlot and myPlot:FindFirstChild("Resources") then
-                    local resource = closest_resource(myPlot.Resources:GetChildren())
-                    while resource and resource:GetAttribute("HP") and resource:GetAttribute("HP") > 0 do
-                        game:GetService("ReplicatedStorage")
-                            :WaitForChild("Communication")
-                            :WaitForChild("HitResource")
-                            :FireServer(resource)
-                        task.wait(0.1)
+                    local resources = myPlot.Resources:GetChildren()
+
+                    for _, resource in ipairs(resources) do
+                        local hp = resource:GetAttribute("HP")
+                        if hp and hp > 0 then
+                            game:GetService("ReplicatedStorage")
+                                :WaitForChild("Communication")
+                                :WaitForChild("HitResource")
+                                :FireServer(resource)
+                        end
                     end
                 end
-
-                task.wait(0.1)
+                task.wait(0.05) -- Slight delay to reduce remote spam and ping spikes
             end
         end)
     end)
+
     Options.AutoFarm:SetValue(false)
 
     local selldelay = 2
-    local autosellall = Tabs.Main:AddToggle("autosellall", {Title = "Auto Sell All", Default = false })
+    local autosellall = Tabs.Main:AddToggle("autosellall", {Title = "Auto Sell", Default = false })
 
     autosellall:OnChanged(function()
         while Options.autosellall.Value do
@@ -242,7 +214,7 @@ do
     Options.autosellall:SetValue(false)
 
     local autoselldelay = Tabs.Main:AddSlider("autoselldelay", {
-        Title = "Auto Sell Delay",
+        Title = "Sell Delay",
         Default = 2,
         Min = 1,
         Max = 60,
@@ -258,6 +230,41 @@ do
         Title = "About Auto Expand",
         Content = "I didnt add auto expand cause its much efficient if your the one going to expand"
     })
+    local Players = game:GetService("Players")
+    local plr = Players.LocalPlayer
+    local plot = game:GetService("Workspace"):WaitForChild("Plots"):WaitForChild(plr.Name)
+    local craft_delay = 5
+    local autocraftall = Tabs.Craft:AddToggle("autocraftall", {Title = "Auto Craft All", Description = "This does not craft furniture or other earning money craft", Default = false })
+
+    autocraftall:OnChanged(function()
+        while Options.autocraftall.Value do
+            for _, c in pairs(plot:GetDescendants()) do
+				if c.Name == "Crafter" then
+					local attachment = c:FindFirstChildOfClass("Attachment")
+					if attachment then
+						game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Craft"):FireServer(attachment)
+					end
+				end
+			end
+			task.wait(craft_delay)
+        end
+    end)
+    
+    Options.autocraftall:SetValue(false)
+
+
+    local autocraftalldelay = Tabs.Craft:AddSlider("autocraftalldelay", {
+        Title = "Craft All Delay",
+        Default = 5,
+        Min = 1,
+        Max = 60,
+        Rounding = 0.1,
+        Callback = function(Value)
+            craft_delay = Value
+        end
+    })
+
+    autocraftalldelay:SetValue(3)
 
     local playerName = game.Players.LocalPlayer.Name
 
@@ -478,17 +485,17 @@ do
         end)
     end)
     Options.AntiAfk:SetValue(false)
-
+    local land = plot:FindFirstChild("Land")
     local autogivegoldmine = Tabs.Collect:AddToggle("autogivegoldmine", {Title = "Auto Give Coal Crate", Default = false })
 
     autogivegoldmine:OnChanged(function()
         while Options.autogivegoldmine.Value do
-            local args = {
-                "S8",
-                1
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Goldmine"):FireServer(unpack(args))
-            task.wait(0.1)
+			for _, mine in pairs(land:GetDescendants()) do
+				if mine:IsA("Model") and mine.Name == "GoldMineModel" then
+					game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Goldmine"):FireServer(mine.Parent.Name, 1)
+				end
+			end
+			task.wait(1)
         end
     end)
     
@@ -498,18 +505,89 @@ do
 
     autocollectgoldmine:OnChanged(function()
         while Options.autocollectgoldmine.Value do
-            local args = {
-                "S8",
-                2
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Goldmine"):FireServer(unpack(args))
-            task.wait(0.1)
+			for _, mine in pairs(land:GetDescendants()) do
+				if mine:IsA("Model") and mine.Name == "GoldMineModel" then
+					game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Goldmine"):FireServer(mine.Parent.Name, 2)
+				end
+			end
+			task.wait(1)
         end
     end)
     Options.autocollectgoldmine:SetValue(false)
 
+    local autoharvest = Tabs.Collect:AddToggle("autoharvest", {Title = "Auto Harvest Crops", Default = false })
 
+    autoharvest:OnChanged(function()
+        while Options.autoharvest.Value do
+			for _, crop in pairs(plot:FindFirstChild("Plants"):GetChildren()) do
+				game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Harvest"):FireServer(crop.Name)
+			end
+			task.wait(1)
+        end
+    end)
+    
+    Options.autoharvest:SetValue(false)
 
+    local autohive = Tabs.Collect:AddToggle("autohive", {Title = "Auto Collect Hive", Default = false })
+
+    autohive:OnChanged(function()
+        while Options.autohive.Value do
+            for _, spot in ipairs(land:GetDescendants()) do
+                if spot:IsA("Model") and spot.Name:match("Spot") then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Hive"):FireServer(spot.Parent.Name, spot.Name, 2)
+                end
+            end
+            task.wait(1)
+        end
+    end)
+    
+    Options.autohive:SetValue(false)
+
+    local items = {}
+    for _, item in ipairs(plr.PlayerGui.Main.Menus.Merchant.Inner.ScrollingFrame.Hold:GetChildren()) do
+        if item:IsA("Frame") and item.Name ~= "Example" then
+            table.insert(items, item.Name)
+        end
+    end
+
+    -- Global variable to store selected items
+    getgenv().selectedItems = {}
+
+    local itemsmulti = Tabs.Shop:AddDropdown("itemsmulti", {
+        Title = "Select Items",
+        Values = items,
+        Multi = true,
+        Default = {},
+    })
+
+    -- Update selected items
+    itemsmulti:OnChanged(function(value)
+        local values = {}
+        for itemName, isSelected in pairs(value) do
+            if isSelected then
+                table.insert(values, itemName)
+            end
+        end
+        selectedItems = values
+    end)
+
+    -- Auto Buy Toggle
+    local autobuy = Tabs.Shop:AddToggle("autobuy", { Title = "Auto Buy", Default = false })
+
+    autobuy:OnChanged(function()
+        task.spawn(function()
+            while Options.autobuy.Value do
+                for _, itemName in ipairs(selectedItems) do
+                    local args = { itemName, false }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("BuyFromMerchant"):FireServer(unpack(args))
+                    task.wait(0.25) -- slight delay per item
+                end
+                task.wait(1) -- main loop delay
+            end
+        end)
+    end)
+
+    Options.autobuy:SetValue(false)
 end  
 
 -- Addons:
