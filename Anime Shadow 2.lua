@@ -72,6 +72,7 @@ end)
 local Tabs = {
     DevUpd = Window:AddTab({ Title = "About", Icon = "wrench"}),
     Main = Window:AddTab({ Title = "Farm Tab", Icon = "home" }),
+    Raid = Window:AddTab({ Title = "Raid", Icon = "swords" }),
     Hatch = Window:AddTab({ Title = "Auto Hatch", Icon = "egg" }),
     AntiAfk = Window:AddTab({ Title = "Anti-Afk", Icon = "clock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -228,7 +229,7 @@ do
         end
     end)
 
-    local autoattack = Tabs.Main:AddToggle("autoattack", {Title = "Auto Fast Click", Default = false })
+    local autoattack = Tabs.Main:AddToggle("autoattack", {Title = "Auto Fast Click", Description = "You can also use this in raid", Default = false })
 
     autoattack:OnChanged(function()
         while Options.autoattack.Value do
@@ -268,8 +269,176 @@ do
             end)
         end
     end)
+    --[[
+    local autojoinraiddelay = 10
+    local autojoinraid = Tabs.Raid:AddToggle("autojoinraid", {Title = "Auto Join Raid", Default = false })
 
-    Tabs.Hatch:AddSection("Soon")
+    autojoinraid:OnChanged(function()
+        while Options.autojoinraid.Value do
+            local args = {
+                "Gamemodes",
+                "Trial",
+                "Join"
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Bridge"):FireServer(unpack(args))
+            task.wait(autojoinraiddelay)
+        end
+    end)
+    
+    Options.autojoinraid:SetValue(false)
+
+    local autojoindelayslider = Tabs.Raid:AddSlider("autojoindelayslider", {
+        Title = "Auto Join Delay",
+        Default = 10,
+        Min = 1,
+        Max = 30,
+        Rounding = 0.1,
+        Callback = function(Value)
+            autojoinraiddelay = Value
+        end
+    })
+
+    autojoindelayslider:SetValue(10)
+    ]]
+    
+    local goto_closest_raid = false
+    local replicated_storage = cloneref(game:GetService('ReplicatedStorage'))
+    local local_player = cloneref(game:GetService('Players').LocalPlayer)
+    local workspace = cloneref(game:GetService('Workspace'))
+
+    function closest_raid_mob()
+        local closestMob = nil
+        local shortestDistance = math.huge
+        local enemiesFolder = workspace:FindFirstChild("Server") and workspace.Server:FindFirstChild("Trial") and workspace.Server.Trial:FindFirstChild("Enemies")
+        if not enemiesFolder then return nil end
+
+        for _, mob in ipairs(enemiesFolder:GetChildren()) do
+            local mobHealth = mob:GetAttribute("Health")
+            if mobHealth and mobHealth > 0 then
+                local distance = (mob.Position - local_player.Character:GetPivot().Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestMob = mob
+                end
+            end
+        end
+
+        return closestMob
+    end
+
+    local ToggleRaidFarm = Tabs.Raid:AddToggle("AutoRaidFarm", {
+        Title = "Auto Farm Raid",
+        Default = false
+    })
+
+    ToggleRaidFarm:OnChanged(function(Value)
+        goto_closest_raid = Value
+        if Value then
+            task.spawn(function()
+                while goto_closest_raid do
+                    local mob = closest_raid_mob()
+                    if mob and local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = local_player.Character.HumanoidRootPart
+                        local targetPos = mob.Position + Vector3.new(0, 0, 3)
+                        if (hrp.Position - targetPos).Magnitude > 10 then
+                            hrp.CFrame = CFrame.new(targetPos, mob.Position)
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end)
+
+    local auto_attack_raid = false
+
+    local ToggleRaidAttack = Tabs.Raid:AddToggle("AutoRaidAttackUnits", {
+        Title = "Auto Attack Units",
+        Default = false
+    })
+
+    ToggleRaidAttack:OnChanged(function(Value)
+        auto_attack_raid = Value
+        if Value then
+            task.spawn(function()
+                while auto_attack_raid do
+                    local mob = closest_raid_mob()
+                    if mob then
+                        local args = {
+                            "Shadows",
+                            "Attack",
+                            "Attack_All",
+                            "Trial",
+                            mob
+                        }
+                        replicated_storage:WaitForChild("Remotes"):WaitForChild("Bridge"):FireServer(unpack(args))
+                    end
+                    task.wait(0.3)
+                end
+            end)
+        end
+    end)
+
+    --[[
+    local autostopfarm = Tabs.Raid:AddToggle("autostopfarm", {Title = "Stop", Default = false })
+
+    autostopfarm:OnChanged(function()
+        while Options.autostopfarm.Value do
+            if workspace.Server.Trial.Lobby.Timer.BillboardGui.TextLabel.Text == "OPENS AT: 16:50" then
+                Options.AutoFarm:SetValue(false)
+            end
+            task.wait(0.1)
+        end
+    end)
+    
+    Options.autostopfarm:SetValue(false)
+    ]]
+
+    local vim = game:GetService("VirtualInputManager")
+
+    local autohatchsingle = Tabs.Hatch:AddToggle("autohatchsingle", {
+        Title = "Auto Hatch Single",
+        Default = false
+    })
+
+    autohatchsingle:OnChanged(function()
+        while Options.autohatchsingle.Value do
+            vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)  -- Press E
+            task.wait(0.05)
+            vim:SendKeyEvent(false, Enum.KeyCode.E, false, game) -- Release E
+            task.wait(0.1) 
+        end
+    end)
+
+    Options.autohatchsingle:SetValue(false)
+
+    local autohatchmulti = Tabs.Hatch:AddToggle("autohatchmulti", {
+        Title = "Auto Hatch Multi",
+        Default = false
+    })
+
+    autohatchmulti:OnChanged(function()
+        while Options.autohatchmulti.Value do
+            vim:SendKeyEvent(true, Enum.KeyCode.Q, false, game)  
+            task.wait(0.05)
+            vim:SendKeyEvent(false, Enum.KeyCode.Q, false, game) 
+            task.wait(0.1) 
+        end
+    end)
+
+    Options.autohatchmulti:SetValue(false)
+
+    local removehatchanimation = Tabs.Hatch:AddToggle("removehatchanimation", {Title = "Remove Hatch Animation", Default = false })
+
+    removehatchanimation:OnChanged(function()
+        while Options.removehatchanimation.Value do
+            game:GetService("Players").LocalPlayer.PlayerGui.Star_View.Enabled = false
+            task.wait(0.1)
+        end
+    end)
+    
+    Options.removehatchanimation:SetValue(false)
+
 
     local Toggle4 = Tabs.AntiAfk:AddToggle("AntiAfk", {
         Title = "Anti-Afk", 
