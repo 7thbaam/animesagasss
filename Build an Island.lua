@@ -189,7 +189,7 @@ do
                         end
                     end
                 end
-                task.wait(0.05) -- Slight delay to reduce remote spam and ping spikes
+                task.wait(0.1) -- Slight delay to reduce remote spam and ping spikes
             end
         end)
     end)
