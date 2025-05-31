@@ -269,6 +269,7 @@ do
             end)
         end
     end)
+    
     local vim = game:GetService("VirtualInputManager")
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
@@ -346,7 +347,7 @@ do
                             hrp.CFrame = CFrame.new(targetPos, mob.Position)
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.5)
                 end
             end)
         end
@@ -381,20 +382,82 @@ do
         end
     end)
 
-    --[[
-    local autostopfarm = Tabs.Raid:AddToggle("autostopfarm", {Title = "Stop", Default = false })
+    local wavetoleave
+    local inputwave = Tabs.Raid:AddInput("inputwave", {
+        Title = "Wave To Leave",
+        Numeric = false, -- Only allows numbers
+        Finished = false, -- Only calls callback when you press enter
+        Callback = function(Value)
+            wavetoleave = Value
+        end
+    })
 
-    autostopfarm:OnChanged(function()
-        while Options.autostopfarm.Value do
-            if workspace.Server.Trial.Lobby.Timer.BillboardGui.TextLabel.Text == "OPENS AT: 16:50" then
-                Options.AutoFarm:SetValue(false)
+    local savedposition -- store saved position globally
+
+    local autoleavewave = Tabs.Raid:AddToggle("autoleavewave", {
+        Title = "Leave Wave to Save Position",
+        Default = false
+    })
+
+    autoleavewave:OnChanged(function()
+        while Options.autoleavewave.Value do
+            if game:GetService("Players").LocalPlayer.PlayerGui.UI.HUD.Trial.Frame.Wave.Value.Text == wavetoleave then
+                local enemies = workspace.Server.Trial.Enemies:GetChildren()
+                if #enemies > 0 then
+                    local args = {
+                        "Gamemodes",
+                        "Trial",
+                        "Leave"
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Bridge"):FireServer(unpack(args))
+                end
+
+                if savedposition then
+                    task.wait(1)
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = savedposition
+                    end
+                end
             end
             task.wait(0.1)
         end
     end)
-    
-    Options.autostopfarm:SetValue(false)
-    ]]
+
+    Options.autoleavewave:SetValue(false)
+
+    -- Button to save current position
+    Tabs.Raid:AddButton({
+        Title = "Save Current Position",
+        Callback = function()
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                savedposition = char.HumanoidRootPart.CFrame
+                Fluent:Notify({
+                    Title = "Aeonic Hub",
+                    Content = "Successfully Saved Position",
+                    Duration = 3
+                })
+            end
+        end
+    })
+
+    -- Optional: Button to manually teleport back to saved position
+    Tabs.Raid:AddButton({
+        Title = "Teleport to Saved Position",
+        Callback = function()
+            local char = game.Players.LocalPlayer.Character
+            if savedposition and char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = savedposition
+                Fluent:Notify({
+                    Title = "Aeonic Hub",
+                    Content = "Teleported to Saved Position",
+                    Duration = 3
+                })
+            end
+        end
+    })
+
 
 
 
