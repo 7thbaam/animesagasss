@@ -263,7 +263,7 @@ do
     local selected_dungeon = "AstralDungeon"
     local dungeons = Tabs.Dungeon:AddDropdown("dungeons", {
         Title = "Select Dungeon",
-        Values = {"AstralDungeon", "CastleDungeon", "CoveDungeon", "DesertDungeon", "ForestDungeon", "JungleDungeon", "MountainDungeon"},
+        Values = {"AstralDungeon", "CastleDungeon", "CoveDungeon", "DesertDungeon", "ForestDungeon", "JungleDungeon", "MountainDungeon", "CaveDungeon"},
         Multi = false,
         Default = 1,
     })
