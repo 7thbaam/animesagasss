@@ -73,6 +73,7 @@ end)
 local Tabs = {
     DevUpd = Window:AddTab({ Title = "About", Icon = "wrench"}),
     Main = Window:AddTab({ Title = "OP Farm", Icon = "home" }),
+    Sell = Window:AddTab({ Title = "Sell", Icon = "dollar-sign" }),
     Dungeon = Window:AddTab({ Title = "Lobby", Icon = "play" }),
     AntiAfk = Window:AddTab({ Title = "Anti-Afk", Icon = "clock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -340,9 +341,6 @@ do
         end
     })
 
-
-
-
     -- Auto Anti-Afk
     local Toggle4 = Tabs.AntiAfk:AddToggle("AntiAfk", {
         Title = "Anti-Afk", 
@@ -367,12 +365,89 @@ do
         end)
     end)
     Options.AntiAfk:SetValue(false)
-    --[[
-    Tabs.Main:AddParagraph({
-        Title = "AFK FARM",
-        Content = 'Put script_key = "" above the script and put it in auto execute'
-    })
-    ]]
+    local autosellall = Tabs.Sell:AddToggle("autosellall", {Title = "Sell All Items", Default = false})
+
+    autosellall:OnChanged(function()
+        while Options.autosellall.Value do
+            local inventory = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Profile"):FindFirstChild("Inventory")
+            if inventory then
+                -- Gather all item instances into a table
+                local itemsToSell = {}
+                for _, item in pairs(inventory:GetChildren()) do
+                    table.insert(itemsToSell, item)
+                end
+
+                -- Only send the request if there's something to sell
+                if #itemsToSell > 0 then
+                    local args = {
+                        itemsToSell  -- this is a single table with all the items
+                    }
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Systems")
+                        :WaitForChild("ItemSelling")
+                        :WaitForChild("SellItem")
+                        :InvokeServer(unpack(args))
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    Options.autosellall:SetValue(false)
+
+    local autosellallpet = Tabs.Sell:AddToggle("autosellallpet", {Title = "Sell All Pets", Default = false})
+
+    autosellallpet:OnChanged(function()
+        while Options.autosellallpet.Value do
+            local pets = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Profile"):FindFirstChild("Pets")
+            if pets then
+                -- Gather all item instances into a table
+                local petsToSell = {}
+                for _, pet in pairs(pets:GetChildren()) do
+                    table.insert(petsToSell, pet)
+                end
+
+                -- Only send the request if there's something to sell
+                if #petsToSell > 0 then
+                    local args = {
+                        petsToSell  -- this is a single table with all the items
+                    }
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Systems")
+                        :WaitForChild("ItemSelling")
+                        :WaitForChild("SellItem")
+                        :InvokeServer(unpack(args))
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    Options.autosellallpet:SetValue(false)
+
+    local autoopenpetchest = Tabs.Main:AddToggle("autoopenpetchest", {Title = "Open All Pet Chest", Default = false })
+
+    autoopenpetchest:OnChanged(function()
+        while Options.autoopenpetchest.Value do
+            local inventory = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Profile"):FindFirstChild("Inventory")
+            if inventory then
+                for _, petchest in pairs(inventory:GetChildren()) do
+                    local count = petchest:FindFirstChild("Count")
+                    if count then
+                        local args = {
+                            petchest,
+                            1
+                        }
+                        game:GetService("ReplicatedStorage"):WaitForChild("Systems"):WaitForChild("Pets"):WaitForChild("OpenPetChest"):FireServer(unpack(args))
+                    end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+    
+    Options.autoopenpetchest:SetValue(false)
+
 end  
 
 -- Addons:
