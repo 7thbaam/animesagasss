@@ -705,17 +705,17 @@ do
 
     autoaddbales:OnChanged(function()
         while Options.autoaddbales.Value do
-            local args = {
-                "S203"
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Animals"):WaitForChild("AddHay"):FireServer(unpack(args))
+			for _, mine in pairs(land:GetDescendants()) do
+				if mine:IsA("Model") and mine.Name == "AnimalPen" then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Animals"):WaitForChild("AddHay"):FireServer(mine.Parent.Name)
+				end
+			end
             task.wait(1)
         end
     end)
     
     Options.autoaddbales:SetValue(false)
-
-
+    
 
     local items = {}
     for _, item in ipairs(plr.PlayerGui.Main.Menus.Merchant.Inner.ScrollingFrame.Hold:GetChildren()) do
