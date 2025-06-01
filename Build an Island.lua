@@ -196,6 +196,70 @@ do
 
     Options.AutoFarm:SetValue(false)
 
+    local AutoFarmTree = Tabs.Main:AddToggle("AutoFarmTree", {
+        Title = "Auto Farm World Tree",
+        Default = false
+    })
+
+    AutoFarmTree:OnChanged(function()
+        task.spawn(function()
+            while Options.AutoFarmTree.Value do
+                local globalresources = workspace:FindFirstChild("GlobalResources")
+
+                if globalresources then
+                    for _, resource in ipairs(globalresources:GetChildren()) do
+                        if resource.Name == "World Tree" then
+                            local hp = resource:GetAttribute("HP")
+                            if hp and hp > 0 then
+                                game:GetService("ReplicatedStorage")
+                                    :WaitForChild("Communication")
+                                    :WaitForChild("HitResource")
+                                    :FireServer(resource)
+                            end
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end)
+
+    Options.AutoFarmTree:SetValue(false)
+
+    local autocollectreward = Tabs.Main:AddToggle("autocollectreward", {Title = "Collect Reward Chest", Default = false })
+
+    autocollectreward:OnChanged(function()
+        while Options.autocollectreward.Value do
+            local rewardchest = workspace:FindFirstChild("RewardChest")
+            if rewardchest then
+                local chestkey = rewardchest:GetAttribute("ChestKey")
+                local args = {
+                    chestkey
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("RewardChestClaimRequest"):FireServer(unpack(args))
+            end
+            task.wait(0.1)
+        end
+    end)
+    Options.autocollectreward:SetValue(false)
+
+    local autocollectworldtree = Tabs.Main:AddToggle("autocollectworldtree", {Title = "Collect World Tree Seed", Default = false })
+
+    autocollectworldtree:OnChanged(function()
+        while Options.autocollectworldtree.Value do
+            local worldtreeseed = workspace:FindFirstChild("WorldTreeSeed")
+            if worldtreeseed then
+                local key = worldtreeseed:GetAttribute("Key")
+                local args = {
+                    key
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("CollectWorldTree"):FireServer(unpack(args))
+            end
+            task.wait(0.1)
+        end
+    end)
+    Options.autocollectworldtree:SetValue(false)
+
     local selldelay = 2
     local autosellall = Tabs.Main:AddToggle("autosellall", {Title = "Auto Sell", Default = false })
 
@@ -225,6 +289,50 @@ do
     })
 
     autoselldelay:SetValue(2)
+
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+    -- WalkSpeed slider
+    local WalkSpeedSlider = Tabs.Main:AddSlider("WalkSpeedSlider", {
+        Title = "WalkSpeed",
+        Description = "Adjust your walk speed",
+        Default = 16,
+        Min = 0,
+        Max = 100,
+        Rounding = 0,
+        Callback = function(Value)
+            if Character and Character:FindFirstChild("Humanoid") then
+                Character.Humanoid.WalkSpeed = Value
+            end
+        end
+    })
+
+    local lastWalkSpeed = WalkSpeedSlider.Value
+
+    -- Continuously enforce WalkSpeed
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if Character and Character:FindFirstChild("Humanoid") then
+                if Character.Humanoid.WalkSpeed ~= lastWalkSpeed then
+                    Character.Humanoid.WalkSpeed = lastWalkSpeed
+                end
+            end
+        end
+    end)
+
+    -- Update lastWalkSpeed when slider changes
+    WalkSpeedSlider:OnChanged(function(Value)
+        lastWalkSpeed = Value
+        if Character and Character:FindFirstChild("Humanoid") then
+            Character.Humanoid.WalkSpeed = Value
+        end
+    end)
+
+    -- Optional: Set initial value
+    WalkSpeedSlider:SetValue(16)
 
     Tabs.Main:AddParagraph({
         Title = "About Auto Expand",
@@ -468,6 +576,56 @@ do
     })
     autodelaymagmafurnace:SetValue(5)
 
+    local haydelay = 5
+    local autocrafthay = Tabs.Craft:AddToggle("autocrafthay", {Title = "Auto Craft Hay Baler", Default = false })
+    autocrafthay:OnChanged(function()
+        while Options.autocrafthay.Value do
+            local args = {
+                workspace:WaitForChild("Plots"):WaitForChild(playerName):WaitForChild("Land"):WaitForChild("S178"):WaitForChild("Crafter"):WaitForChild("Attachment")
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Craft"):FireServer(unpack(args))
+            task.wait(haydelay)
+        end
+    end)
+    Options.autocrafthay:SetValue(false)
+
+    local autodelayhay = Tabs.Craft:AddSlider("autodelayhay", {
+        Title = "Craft Delay",
+        Default = 5,
+        Min = 1,
+        Max = 200,
+        Rounding = 0.1,
+        Callback = function(Value)
+            haydelay = Value
+        end
+    })
+    autodelayhay:SetValue(5)
+
+    local magmasawmilldelay = 5
+    local autocraftmagmasawmill = Tabs.Craft:AddToggle("autocraftmagmasawmill", {Title = "Auto Craft Magma Sawmill", Default = false })
+    autocraftmagmasawmill:OnChanged(function()
+        while Options.autocraftmagmasawmill.Value do
+            local args = {
+                workspace:WaitForChild("Plots"):WaitForChild(playerName):WaitForChild("Land"):WaitForChild("S108"):WaitForChild("Crafter"):WaitForChild("Attachment")
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Craft"):FireServer(unpack(args))
+            task.wait(magmasawmilldelay)
+        end
+    end)
+    Options.autocraftmagmasawmill:SetValue(false)
+
+    local autodelaymagmasawmill = Tabs.Craft:AddSlider("autodelaymagmasawmill", {
+        Title = "Craft Delay",
+        Default = 5,
+        Min = 1,
+        Max = 200,
+        Rounding = 0.1,
+        Callback = function(Value)
+            magmasawmilldelay = Value
+        end
+    })
+    autodelaymagmasawmill:SetValue(5)
+
     local Toggle4 = Tabs.AntiAfk:AddToggle("AntiAfk", {
         Title = "Anti-Afk", 
         Description = "This will prevent you from being kicked when AFK", 
@@ -542,6 +700,22 @@ do
     end)
     
     Options.autohive:SetValue(false)
+
+    local autoaddbales = Tabs.Collect:AddToggle("autoaddbales", {Title = "Auto Add Bales", Default = false })
+
+    autoaddbales:OnChanged(function()
+        while Options.autoaddbales.Value do
+            local args = {
+                "S203"
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Animals"):WaitForChild("AddHay"):FireServer(unpack(args))
+            task.wait(1)
+        end
+    end)
+    
+    Options.autoaddbales:SetValue(false)
+
+
 
     local items = {}
     for _, item in ipairs(plr.PlayerGui.Main.Menus.Merchant.Inner.ScrollingFrame.Hold:GetChildren()) do
