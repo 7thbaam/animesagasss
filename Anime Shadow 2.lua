@@ -6,7 +6,7 @@ local Window = Fluent:CreateWindow({
     Title = "Aeonic Hub",
     SubTitle = "| [BETA] Anime Shadow 2 | discord.gg/mbyHbxAhhT",
     TabWidth = 160,
-    Size = UDim2.fromOffset(550, 430),
+    Size = UDim2.fromOffset(580, 340),
     Acrylic = false, -- The blur may be detectable, setting this to false disables blur entirely
     Theme = "Amethyst",
     MinimizeKey = Enum.KeyCode.LeftControl -- Used when theres no MinimizeKeybind
@@ -103,9 +103,9 @@ do
 
     local selected_world = "Shadow City"
 
-    local shadowcitymobs = {"AxeGuardian", "KingGuardian", "MaceGuardian", "SingerGuardian"}
-    local slayerislandmobs = {"Dhoma", "Enmo", "Hantego", "Kokoshibo", "Ruih"}
-    local dragonworldmobs = {"Boo", "Frieza", "GokoBlack", "Gran", "Jeren"}
+    local shadowcitymobs = {"AxeGuardian", "KingGuardian", "MaceGuardian", "SingerGuardian", "SwordGuardian"}
+    local slayerislandmobs = {"Akazha", "Dake", "Dhoma", "Enmo", "Gyutaru", "Hantego", "Kokoshibo", "Ruih", "Susamaro"}
+    local dragonworldmobs = {"Androidi", "Boo", "Broli", "Couler", "Frieza", "GokoBlack", "Gran", "Jeren", "Zamaso", "Zell"}
 
     local world_to_mobs = {
         ["Shadow City"] = shadowcitymobs,
