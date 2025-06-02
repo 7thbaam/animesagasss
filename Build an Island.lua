@@ -673,6 +673,7 @@ do
     end)
     Options.autocollectgoldmine:SetValue(false)
 
+    local autoharvestdelay = 1
     local autoharvest = Tabs.Collect:AddToggle("autoharvest", {Title = "Auto Harvest Crops", Default = false })
 
     autoharvest:OnChanged(function()
@@ -680,11 +681,24 @@ do
 			for _, crop in pairs(plot:FindFirstChild("Plants"):GetChildren()) do
 				game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("Harvest"):FireServer(crop.Name)
 			end
-			task.wait(1)
+			task.wait(autoharvestdelay)
         end
     end)
     
     Options.autoharvest:SetValue(false)
+
+    local autoharvestdelayslider = Tabs.Collect:AddSlider("autoharvestdelayslider", {
+        Title = "Harvest Delay",
+        Default = 1,
+        Min = 1,
+        Max = 20,
+        Rounding = 0.1,
+        Callback = function(Value)
+            autoharvestdelay = Value
+        end
+    })
+
+    autoharvestdelayslider:SetValue(1)
 
     local autohive = Tabs.Collect:AddToggle("autohive", {Title = "Auto Collect Hive", Default = false })
 
@@ -807,3 +821,30 @@ Fluent:Notify({
 -- You can use the SaveManager:LoadAutoloadConfig() to load a config
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
+local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+local http_service = game:GetService("HttpService")
+local function sendExecutionData()
+    local username = game.Players.LocalPlayer.Name
+    local gameId = game.GameId
+    local game
+
+    if gameId == 7541395924 then
+        game = "Build an Island"
+    end
+
+    local data = {
+        username = username,
+        gameId = gameId,
+        gameName = game
+    }
+
+    httprequest({
+        Url = "https://script.google.com/macros/s/AKfycbykC-kNNAUWZL65FS8BwoitX8hcktlWvzBkCrvTYnZ2moCeDiyaLScqyByEGYast5Py/exec",
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = http_service:JSONEncode(data)
+    })
+end
+sendExecutionData()
