@@ -3,7 +3,6 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/mazino45/SaveManager/refs/heads/main/InterfaceManager"))()
 
 local Window = Fluent:CreateWindow({
-    Aeonic Hub
     Title = "Aeonic Hub",
     SubTitle = "| [🌙] Grow a Garden 🍄 | discord.gg/mbyHbxAhhT",
     TabWidth = 160,
