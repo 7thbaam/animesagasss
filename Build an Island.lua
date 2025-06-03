@@ -71,9 +71,10 @@ end)
 --Fluent provides Lucide Icons https://lucide.dev/icons/ for the tabs, icons are optional
 local Tabs = {
     DevUpd = Window:AddTab({ Title = "About", Icon = "wrench"}),
-    Main = Window:AddTab({ Title = "Auto Farm", Icon = "home" }),
-    Craft = Window:AddTab({ Title = "Auto Craft", Icon = "wrench" }),
-    Collect = Window:AddTab({ Title = "Auto Collect", Icon = "archive" }),
+    Main = Window:AddTab({ Title = "Farm", Icon = "home" }),
+    Sell = Window:AddTab({ Title = "Sell", Icon = "dollar-sign" }),
+    Craft = Window:AddTab({ Title = "Craft", Icon = "wrench" }),
+    Collect = Window:AddTab({ Title = "Collect", Icon = "archive" }),
     Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
     AntiAfk = Window:AddTab({ Title = "Anti-Afk", Icon = "clock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -260,24 +261,65 @@ do
     end)
     Options.autocollectworldtree:SetValue(false)
 
+    local backpackitems = {}
+    local backpackitemsloc = game:GetService("ReplicatedStorage").Storage:FindFirstChild("BackpackItems")
+    if backpackitemsloc then
+        for _, backpackitem in pairs(backpackitemsloc:GetChildren()) do
+            table.insert(backpackitems, backpackitem.Name)
+        end
+    end
+
+    
+    getgenv().backpackselectedItems = {}
+
+    local backpackitemsmulti = Tabs.Sell:AddDropdown("backpackitemsmulti", {
+        Title = "Exclude from Selling",
+        Values = backpackitems,
+        Multi = true,
+        Default = {},
+    })
+
+    -- Update selected items
+    backpackitemsmulti:OnChanged(function(value)
+        local values = {}
+        for itemName, isSelected in pairs(value) do
+            if isSelected then
+                table.insert(values, itemName)
+            end
+        end
+        backpackselectedItems = values
+    end)
+
+
     local selldelay = 2
-    local autosellall = Tabs.Main:AddToggle("autosellall", {Title = "Auto Sell", Default = false })
+    local autosellall = Tabs.Sell:AddToggle("autosellall", {Title = "Auto Sell", Default = false })
 
     autosellall:OnChanged(function()
         while Options.autosellall.Value do
-            local args = {
-                true,
-                {}
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("SellToMerchant"):FireServer(unpack(args))
+            local backpack = game:GetService("Players").LocalPlayer:FindFirstChild("Backpack")
+            if backpack then
+                for _, item in pairs(backpack:GetChildren()) do
+                    local sellable = item:GetAttribute("Sellable")
+                    if sellable and not table.find(backpackselectedItems, item.Name) then
+                        local hash = item:GetAttribute("Hash")
+                        local args = {
+                            false,
+                            {
+                                hash
+                            }
+                        }
+                        game:GetService("ReplicatedStorage"):WaitForChild("Communication"):WaitForChild("SellToMerchant"):FireServer(unpack(args))
+                    end
+                end
+            end
             task.wait(selldelay)
         end
-
     end)
+
 
     Options.autosellall:SetValue(false)
 
-    local autoselldelay = Tabs.Main:AddSlider("autoselldelay", {
+    local autoselldelay = Tabs.Sell:AddSlider("autoselldelay", {
         Title = "Sell Delay",
         Default = 2,
         Min = 1,
@@ -290,54 +332,55 @@ do
 
     autoselldelay:SetValue(2)
 
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    Tabs.Sell:AddParagraph({
+        Title = "About Auto Sell",
+        Content = "Even if you didn't exclude seeds and animals, it will not sell them but for potions you need to exclude them"
+    })
+    
+    local myspeed = 30
+    local enablewalkspeed = Tabs.Main:AddToggle("enablewalkspeed", {Title = "Enable Walkspeed", Default = false })
 
-    -- WalkSpeed slider
+    enablewalkspeed:OnChanged(function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+
+        if Options.enablewalkspeed.Value then
+            while Options.enablewalkspeed.Value do
+                local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                if Character and Character:FindFirstChild("Humanoid") then
+                    Character.Humanoid.WalkSpeed = myspeed
+                end
+                task.wait(0.01)
+            end
+        else
+            local Character = LocalPlayer.Character
+            if Character and Character:FindFirstChild("Humanoid") then
+                Character.Humanoid.WalkSpeed = 16
+            end
+        end
+    end)
+
+    
+    Options.enablewalkspeed:SetValue(false)
+
     local WalkSpeedSlider = Tabs.Main:AddSlider("WalkSpeedSlider", {
         Title = "WalkSpeed",
         Description = "Adjust your walk speed",
-        Default = 16,
-        Min = 0,
-        Max = 100,
-        Rounding = 0,
+        Default = 30,
+        Min = 1,
+        Max = 150,
+        Rounding = 0.1,
         Callback = function(Value)
-            if Character and Character:FindFirstChild("Humanoid") then
-                Character.Humanoid.WalkSpeed = Value
-            end
+            myspeed = Value
         end
     })
 
-    local lastWalkSpeed = WalkSpeedSlider.Value
-
-    -- Continuously enforce WalkSpeed
-    task.spawn(function()
-        while true do
-            task.wait(0.1)
-            if Character and Character:FindFirstChild("Humanoid") then
-                if Character.Humanoid.WalkSpeed ~= lastWalkSpeed then
-                    Character.Humanoid.WalkSpeed = lastWalkSpeed
-                end
-            end
-        end
-    end)
-
-    -- Update lastWalkSpeed when slider changes
-    WalkSpeedSlider:OnChanged(function(Value)
-        lastWalkSpeed = Value
-        if Character and Character:FindFirstChild("Humanoid") then
-            Character.Humanoid.WalkSpeed = Value
-        end
-    end)
-
-    -- Optional: Set initial value
-    WalkSpeedSlider:SetValue(16)
 
     Tabs.Main:AddParagraph({
         Title = "About Auto Expand",
         Content = "I didnt add auto expand cause its much efficient if your the one going to expand"
     })
+
     local Players = game:GetService("Players")
     local plr = Players.LocalPlayer
     local plot = game:GetService("Workspace"):WaitForChild("Plots"):WaitForChild(plr.Name)
