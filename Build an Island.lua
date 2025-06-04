@@ -165,6 +165,50 @@ do
     Options.AutoFarmSelected:SetValue(false)
     ]]
 
+    local listplayers = {}
+    local players = game.Players
+    local localPlayerName = players.LocalPlayer.Name
+    getgenv().selectedPlayers = {localPlayerName}
+
+    -- Function to refresh the player list and update the dropdown
+    local function refreshPlayerList()
+        table.clear(listplayers)
+        for _, player in pairs(players:GetPlayers()) do
+            table.insert(listplayers, player.Name)
+        end
+        Options.playersmulti:SetValues(listplayers)
+        Options.playersmulti:SetValue({[localPlayerName] = true})
+    end
+
+
+    local playersmulti = Tabs.Main:AddDropdown("playersmulti", {
+        Title = "List Of Players",
+        Description = "You can now farm other players resources as long as your a helper",
+        Values = listplayers,
+        Multi = true,
+        Default = {localPlayerName}, 
+    })
+
+
+    playersmulti:OnChanged(function(Value)
+        local Values = {}
+        for name, state in next, Value do
+            if state then
+                table.insert(Values, name)
+            end
+        end
+        selectedPlayers = Values
+    end)
+
+
+    Tabs.Main:AddButton({
+        Title = "Refresh Player List",
+        Callback = function()
+            refreshPlayerList()
+        end
+    })
+
+    -- Toggle for Instant Farm
     local AutoFarm = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Instant Farm All",
         Default = false
@@ -173,29 +217,38 @@ do
     AutoFarm:OnChanged(function()
         task.spawn(function()
             while Options.AutoFarm.Value do
-                local playerName = game.Players.LocalPlayer.Name
                 local plots = workspace:WaitForChild("Plots")
-                local myPlot = plots:FindFirstChild(playerName)
 
-                if myPlot and myPlot:FindFirstChild("Resources") then
-                    local resources = myPlot.Resources:GetChildren()
+                for _, targetPlayer in ipairs(selectedPlayers) do
+                    local targetPlot = plots:FindFirstChild(targetPlayer)
 
-                    for _, resource in ipairs(resources) do
-                        local hp = resource:GetAttribute("HP")
-                        if hp and hp > 0 then
-                            game:GetService("ReplicatedStorage")
-                                :WaitForChild("Communication")
-                                :WaitForChild("HitResource")
-                                :FireServer(resource)
+                    if targetPlot and targetPlot:FindFirstChild("Resources") then
+                        local resources = targetPlot.Resources:GetChildren()
+
+                        for _, resource in ipairs(resources) do
+                            local hp = resource:GetAttribute("HP")
+                            if hp and hp > 0 then
+                                game:GetService("ReplicatedStorage")
+                                    :WaitForChild("Communication")
+                                    :WaitForChild("HitResource")
+                                    :FireServer(resource)
+                            end
                         end
                     end
                 end
-                task.wait(0.1) -- Slight delay to reduce remote spam and ping spikes
+
+                task.wait(0.1)
             end
         end)
     end)
 
     Options.AutoFarm:SetValue(false)
+
+    -- Initial population of player list
+    refreshPlayerList()
+
+
+
 
     local AutoFarmTree = Tabs.Main:AddToggle("AutoFarmTree", {
         Title = "Auto Farm World Tree",
