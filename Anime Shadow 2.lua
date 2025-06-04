@@ -72,7 +72,7 @@ end)
 local Tabs = {
     DevUpd = Window:AddTab({ Title = "About", Icon = "wrench"}),
     Main = Window:AddTab({ Title = "Farm Tab", Icon = "home" }),
-    Raid = Window:AddTab({ Title = "Raid", Icon = "swords" }),
+    Raid = Window:AddTab({ Title = "Trial", Icon = "swords" }),
     Hatch = Window:AddTab({ Title = "Auto Hatch", Icon = "egg" }),
     AntiAfk = Window:AddTab({ Title = "Anti-Afk", Icon = "clock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -270,40 +270,10 @@ do
             end)
         end
     end)
-    
+
     local vim = game:GetService("VirtualInputManager")
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
-
-    local autojoinraid = Tabs.Raid:AddToggle("autojoinraid", {Title = "Auto Join Raid", Description = "Make sure to on this 15 sec before the raid opens", Default = false })
-
-    autojoinraid:OnChanged(function()
-        while Options.autojoinraid.Value do
-            local character = player.Character or player.CharacterAdded:Wait()
-            local timerText = workspace.Server.Trial.Lobby.Timer.BillboardGui.TextLabel.Text
-
-            if character and timerText == "OPENS AT: 00:10" then
-                Options.AutoFarm:SetValue(false)
-                Options.autoattackunit:SetValue(false)
-                task.wait(0.5)
-                local targetCFrame = CFrame.new(-391.03778076171875, 12.28526496887207, -4062.43310546875)
-                character:PivotTo(targetCFrame)
-            end
-
-            if character and timerText == "STARTS AT: 00:58" then
-                local args = {
-                    "Gamemodes",
-                    "Trial",
-                    "Join"
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Bridge"):FireServer(unpack(args))
-            end
-
-            task.wait(0.1)
-        end
-    end)
-
-    Options.autojoinraid:SetValue(false)
 
     local goto_closest_raid = false
     local replicated_storage = cloneref(game:GetService('ReplicatedStorage'))
@@ -331,7 +301,7 @@ do
     end
 
     local ToggleRaidFarm = Tabs.Raid:AddToggle("AutoRaidFarm", {
-        Title = "Auto Farm Raid",
+        Title = "Auto Trial",
         Default = false
     })
 
@@ -340,6 +310,17 @@ do
         if Value then
             task.spawn(function()
                 while goto_closest_raid do
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local timerText = workspace.Server.Trial.Lobby.Timer.BillboardGui.TextLabel.Text
+
+                    if character and timerText == "STARTS AT: 00:05" then
+                        local args = {
+                            "Gamemodes",
+                            "Trial",
+                            "Join"
+                        }
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Bridge"):FireServer(unpack(args))
+                    end
                     local mob = closest_raid_mob()
                     if mob and local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
                         local hrp = local_player.Character.HumanoidRootPart
