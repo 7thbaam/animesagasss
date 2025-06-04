@@ -106,17 +106,18 @@ do
     local shadowcitymobs = {"AxeGuardian", "KingGuardian", "MaceGuardian", "SingerGuardian", "SwordGuardian"}
     local slayerislandmobs = {"Akazha", "Dake", "Dhoma", "Enmo", "Gyutaru", "Hantego", "Kokoshibo", "Ruih", "Susamaro"}
     local dragonworldmobs = {"Androidi", "Boo", "Broli", "Couler", "Frieza", "GokoBlack", "Gran", "Jeren", "Zamaso", "Zell"}
-
+    local marinemobs = {"Buggi", "Crocodele", "Figarlend", "Kaku", "Riokugiu", "Shiriu"}
     local world_to_mobs = {
         ["Shadow City"] = shadowcitymobs,
         ["Slayer Island"] = slayerislandmobs,
         ["Dragon World"] = dragonworldmobs,
+        ["Marine Island"] = marinemobs,
     }
 
     
     local selectworld = Tabs.Main:AddDropdown("selectworld", {
         Title = "Select World",
-        Values = {"Shadow City", "Slayer Island", "Dragon World"},
+        Values = {"Shadow City", "Slayer Island", "Dragon World", "Marine Island"},
         Multi = false,
         Default = "Shadow City",
     })
