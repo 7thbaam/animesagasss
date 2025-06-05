@@ -102,7 +102,6 @@ do
     })
 
     local selected_world = "Shadow City"
-
     local shadowcitymobs = {"AxeGuardian", "KingGuardian", "MaceGuardian", "SingerGuardian", "SwordGuardian"}
     local slayerislandmobs = {"Akazha", "Dake", "Dhoma", "Enmo", "Gyutaru", "Hantego", "Kokoshibo", "Ruih", "Susamaro"}
     local dragonworldmobs = {"Androidi", "Boo", "Broli", "Couler", "Frieza", "GokoBlack", "Gran", "Jeren", "Zamaso", "Zell"}
@@ -154,7 +153,7 @@ do
 
     local selectdifficulty = Tabs.Main:AddDropdown("selectdifficulty", {
         Title = "Select Difficulties",
-        Values = {"Easy", "Medium", "Hard", "Impossible", "Boss"},
+        Values = {"Easy", "Medium", "Hard", "Impossible", "Boss", "Raid Boss"},
         Multi = true,
         Default = { Easy = true },
     })
@@ -217,10 +216,10 @@ do
                     local mob = closest_mob()
                     if mob and local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
                         local hrp = local_player.Character.HumanoidRootPart
-                        local targetPos = mob.Position + Vector3.new(0, y or 0, 3)
+                        local targetPos = mob.Position + Vector3.new(0, y or 0, 6)
 
                         -- Only teleport if farther than 1 stud
-                        if (hrp.Position - targetPos).Magnitude > 10 then
+                        if (hrp.Position - targetPos).Magnitude > 13 then
                             hrp.CFrame = CFrame.new(targetPos, mob.Position)
                         end
                     end
@@ -230,7 +229,7 @@ do
         end
     end)
 
-    local autoattack = Tabs.Main:AddToggle("autoattack", {Title = "Auto Fast Click", Description = "You can also use this in raid", Default = false })
+    local autoattack = Tabs.Main:AddToggle("autoattack", {Title = "Auto Fast Click", Description = "You can also use this in trial", Default = false })
 
     autoattack:OnChanged(function()
         while Options.autoattack.Value do
@@ -324,8 +323,8 @@ do
                     local mob = closest_raid_mob()
                     if mob and local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
                         local hrp = local_player.Character.HumanoidRootPart
-                        local targetPos = mob.Position + Vector3.new(0, 0, 3)
-                        if (hrp.Position - targetPos).Magnitude > 10 then
+                        local targetPos = mob.Position + Vector3.new(0, 0, 6)
+                        if (hrp.Position - targetPos).Magnitude > 13 then
                             hrp.CFrame = CFrame.new(targetPos, mob.Position)
                         end
                     end
