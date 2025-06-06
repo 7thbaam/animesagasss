@@ -141,7 +141,7 @@ do
                             replicated_storage:WaitForChild("remotes"):WaitForChild("onHit"):FireServer(v.Humanoid, current_damage(), {}, 0)
                         end
                     end
-                    task.wait(0.5)
+                    task.wait(0.3)
                 end
             end)
         end
@@ -196,6 +196,10 @@ do
                 and has_hadEntrance then
 
                 local dist = (v:GetPivot().Position - local_player.Character:GetPivot().Position).Magnitude
+                local mob_root = v:FindFirstChild("HumanoidRootPart")
+                if mob_root then
+                    mob_root.Anchored = true
+                end
                 if dist < distance then
                     distance = dist
                     mob = v
@@ -206,8 +210,9 @@ do
         return mob
     end
 
-    local tweenspeed = 50
+    local tweenspeed = 60
     local distancey = 19
+    local transdelay = 2
     local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Auto Farm",
         Default = false
@@ -277,20 +282,9 @@ do
                         local to = mob:GetPivot().Position
                         local total_distance = (to - hrp.Position).Magnitude
 
-                        if total_distance > 60 then
+                        if total_distance > 80 then
                             -- Step 1: Move partway using speed 10 for 3 seconds
-                            local speed1 = 60
-                            local duration1 = 0
-                            local distance1 = speed1 * duration1
-
-                            local direction = (to - hrp.Position).Unit
-                            local intermediate_position = hrp.Position + direction * distance1
-
-                            local tween1 = tween_service:Create(hrp, TweenInfo.new(duration1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                CFrame = CFrame.new(intermediate_position)
-                            })
-                            tween1:Play()
-                            tween1.Completed:Wait()
+                            task.wait(transdelay)
 
                             -- Step 2: Move the remaining distance at speed 100
                             local new_to = mob:GetPivot().Position
@@ -320,9 +314,11 @@ do
         end
     end)
 
+
+
     local tweenspeedslider = Tabs.Main:AddSlider("tweenspeedslider", {
         Title = "Tween Speed",
-        Default = 50,
+        Default = 60,
         Min = 1,
         Max = 70,
         Rounding = 0.1,
