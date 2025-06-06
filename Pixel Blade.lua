@@ -212,7 +212,7 @@ do
 
     local tweenspeed = 60
     local distancey = 19
-    local transdelay = 2
+    local transdelay = 0
     local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Auto Farm",
         Default = false
