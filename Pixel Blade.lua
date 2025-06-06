@@ -333,6 +333,7 @@ do
 
     local distanceslider = Tabs.Main:AddSlider("distanceslider", {
         Title = "Distance Y from mobs",
+        Description = "If your near or touching the mobs while farming, anti-cheat will kick you",
         Default = 19,
         Min = -19,
         Max = 19,
@@ -346,6 +347,7 @@ do
         Title = "Game is buggy",
         Content = "Sometimes you will be stuck with the mobs cause you cant hit it. If that happens, just click return to lobby"
     })
+
 
     local selected_dungeon = "Grasslands"
     local dungeons = Tabs.Portal:AddDropdown("dungeons", {
