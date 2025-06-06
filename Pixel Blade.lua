@@ -278,7 +278,7 @@ do
 
                         if total_distance > 60 then
                             -- Step 1: Move partway using speed 10 for 3 seconds
-                            local speed1 = 60
+                            local speed1 = 20
                             local duration1 = 0
                             local distance1 = speed1 * duration1
 
@@ -294,14 +294,14 @@ do
                             -- Step 2: Move the remaining distance at speed 100
                             local new_to = mob:GetPivot().Position
                             local remaining_distance = (new_to - hrp.Position).Magnitude
-                            local tween2 = tween_service:Create(hrp, TweenInfo.new(remaining_distance / 60, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+                            local tween2 = tween_service:Create(hrp, TweenInfo.new(remaining_distance / 20, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
                                 CFrame = CFrame.new(new_to + Vector3.new(0, 19, 0))
                             })
                             tween2:Play()
                             tween2.Completed:Wait()
                         else
                             -- Move using speed 100 only
-                            local tween_duration = total_distance / 60
+                            local tween_duration = total_distance / 20
                             local tween = tween_service:Create(hrp, TweenInfo.new(tween_duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
                                 CFrame = CFrame.new(to + Vector3.new(0, 19, 0))
                             })
