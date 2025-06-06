@@ -207,6 +207,7 @@ do
     end
 
     local tweenspeed = 50
+    local distancey = 19
     local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Auto Farm",
         Default = false
@@ -295,7 +296,7 @@ do
                             local new_to = mob:GetPivot().Position
                             local remaining_distance = (new_to - hrp.Position).Magnitude
                             local tween2 = tween_service:Create(hrp, TweenInfo.new(remaining_distance / tweenspeed, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                CFrame = CFrame.new(new_to + Vector3.new(0, 19, 0))
+                                CFrame = CFrame.new(new_to + Vector3.new(0, distancey, 0))
                             })
                             tween2:Play()
                             tween2.Completed:Wait()
@@ -303,7 +304,7 @@ do
                             -- Move using speed 100 only
                             local tween_duration = total_distance / tweenspeed
                             local tween = tween_service:Create(hrp, TweenInfo.new(tween_duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                CFrame = CFrame.new(to + Vector3.new(0, 19, 0))
+                                CFrame = CFrame.new(to + Vector3.new(0, distancey, 0))
                             })
                             tween:Play()
                             tween.Completed:Wait()
@@ -327,6 +328,17 @@ do
         Rounding = 0.1,
         Callback = function(Value)
             tweenspeed = Value
+        end
+    })
+
+    local distanceslider = Tabs.Main:AddSlider("distanceslider", {
+        Title = "Distance Y from mobs",
+        Default = 19,
+        Min = -19,
+        Max = 19,
+        Rounding = 0.1,
+        Callback = function(Value)
+            distancey = Value
         end
     })
 
