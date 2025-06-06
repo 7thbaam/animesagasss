@@ -212,7 +212,6 @@ do
 
     local tweenspeed = 60
     local distancey = 19
-    local transdelay = 0
     local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Auto Farm",
         Default = false
@@ -284,7 +283,7 @@ do
 
                         if total_distance > 80 then
                             -- Step 1: Move partway using speed 10 for 3 seconds
-                            task.wait(transdelay)
+                            
 
                             -- Step 2: Move the remaining distance at speed 100
                             local new_to = mob:GetPivot().Position
@@ -315,12 +314,11 @@ do
     end)
 
 
-
     local tweenspeedslider = Tabs.Main:AddSlider("tweenspeedslider", {
         Title = "Tween Speed",
         Default = 60,
         Min = 1,
-        Max = 70,
+        Max = 200,
         Rounding = 0.1,
         Callback = function(Value)
             tweenspeed = Value
