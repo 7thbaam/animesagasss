@@ -210,7 +210,7 @@ do
         return mob
     end
 
-    local tweenspeed = 60
+    local tweenspeed = 50
     local distancey = 19
     local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
         Title = "Auto Farm",
@@ -316,7 +316,7 @@ do
 
     local tweenspeedslider = Tabs.Main:AddSlider("tweenspeedslider", {
         Title = "Tween Speed",
-        Default = 60,
+        Default = 50,
         Min = 1,
         Max = 200,
         Rounding = 0.1,
