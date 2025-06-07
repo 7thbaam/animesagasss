@@ -101,20 +101,16 @@ do
         end
     })
 
-    local replicated_storage = game:GetService("ReplicatedStorage")
-    local local_player = game:GetService("Players").LocalPlayer
-    local workspace = game:GetService("Workspace")
+    local replicated_storage = cloneref(game:GetService("ReplicatedStorage"))
+    local user_input_service = cloneref(game:GetService("UserInputService"))
+    local local_player = cloneref(game:GetService("Players").LocalPlayer)
+    local tween_service = cloneref(game:GetService("TweenService"))
+    local run_service = cloneref(game:GetService("RunService"))
+    local workspace = cloneref(game:GetService("Workspace"))
 
-    -- Load player stats once
     local player_stats = require(local_player:FindFirstChild("plrStats"))
 
-    -- Kill Aura toggle
-    local killaura = Tabs.Main:AddToggle("KillAura", {
-        Title = "Kill Aura",
-        Default = false
-    })
-
-    -- Damage calculation function
+    -- Damage function
     local function current_damage()
         local damage = 0
         for i, v in next, player_stats.wpnStats do
@@ -125,27 +121,163 @@ do
         return damage
     end
 
-    -- Toggle callback
-    killaura:OnChanged(function(value)
-        if value then
-            task.spawn(function()
-                while Options.KillAura.Value do
-                    for _, v in next, workspace:GetChildren() do
-                        if v ~= local_player.Character 
-                            and v:IsA("Model")
-                            and v:FindFirstChild("Humanoid") 
-                            and v.Humanoid.Health > 0
-                            and (v:GetPivot().Position - local_player.Character:GetPivot().Position).magnitude < 20 then
+    -- Closest mob finder
+    local function closest_mob()
+        local mob = nil
+        local distance = math.huge
 
-                            replicated_storage:WaitForChild("remotes"):WaitForChild("swing"):FireServer()
-                            replicated_storage:WaitForChild("remotes"):WaitForChild("onHit"):FireServer(v.Humanoid, current_damage(), {}, 0)
+        for _, v in next, workspace:GetChildren() do
+            local has_hadEntrance = v:GetAttribute("hadEntrance") ~= nil
+
+            if v ~= local_player.Character 
+                and v:IsA("Model") 
+                and v:FindFirstChild("Humanoid") 
+                and v.Humanoid.Health > 0 
+                and has_hadEntrance then
+
+                local dist = (v:GetPivot().Position - local_player.Character:GetPivot().Position).Magnitude
+                local hum = v:FindFirstChild("HumanoidRootPart")
+                hum.Anchored = true
+                if dist < distance then
+                    distance = dist
+                    mob = v
+                end
+            end
+        end
+        return mob
+    end
+
+    -- Auto Farm toggle
+    local goto_closest = false
+    local transdelay = 2
+
+    local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
+        Title = "Auto Farm (with Kill Aura)",
+        Default = false
+    })
+
+    Toggle3:OnChanged(function(Value)
+        goto_closest = Value
+
+        if Value then
+            task.spawn(function()
+                while goto_closest do
+                    local char = local_player.Character
+                    if char then
+                        for _, part in ipairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
                         end
                     end
-                    task.wait(0.3)
+
+                    local six = workspace:FindFirstChild("6")
+                    local seven = workspace:FindFirstChild("7")
+                    local eight = workspace:FindFirstChild("8")
+                    local kingslayer = workspace:FindFirstChild("LumberJack")
+                    local twenty = workspace:FindFirstChild("20")
+                    local bossroom = workspace:FindFirstChild("BossRoom")
+
+                    if workspace.difficulty.Value == "Normal" and six and seven and not kingslayer then
+                        local char = local_player.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            char.HumanoidRootPart.CFrame = seven:GetPivot()
+                        end
+                    elseif workspace.difficulty.Value == "Heroic" and seven and eight and not kingslayer then
+                        local char = local_player.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            char.HumanoidRootPart.CFrame = eight:GetPivot()
+                        end
+                    end
+                    --[[
+                    local function noEnemyModelsExist()
+                        local forbiddenNames = {
+                            ["Bolt"] = true,
+                            ["Cannon"] = true,
+                            ["CannonGoblin"] = true,
+                            ["Giant"] = true,
+                            ["Mage"] = true
+                        }
+                        for _, v in pairs(workspace:GetChildren()) do
+                            if v:IsA("Model") and forbiddenNames[v.Name] then
+                                return false
+                            end
+                        end
+                        return true
+                    end
+
+                    if twenty and bossroom and noEnemyModelsExist() then
+                        local char = local_player.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            char.HumanoidRootPart.CFrame = bossroom:GetPivot()
+                        end
+                    end
+                    ]]
+                    -- Auto Farm + Kill Aura logic
+                    local cutscene = workspace:FindFirstChild("inCutscene")
+                    local mob = closest_mob()
+
+                    if cutscene and cutscene.Value == false and mob then
+                        local character = local_player.Character
+                        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+                        if hrp then
+                            local mob_position = mob.HumanoidRootPart.Position
+                            local mob_look_vector = mob.HumanoidRootPart.CFrame.LookVector
+                            local target_position = mob_position + mob_look_vector * -8
+                            local target_cframe = CFrame.lookAt(target_position, mob_position)
+                            
+                            local total_distance = (mob_position - hrp.Position).Magnitude
+                            if total_distance > 70 then
+                                task.wait(transdelay)
+                            end
+
+                            -- Engage in combat
+                            while mob 
+                                and mob:FindFirstChild("Humanoid") 
+                                and mob.Humanoid.Health > 0 
+                                and goto_closest 
+                            do
+                                local velocity_connection = run_service.Heartbeat:Connect(function()
+                                    if local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
+                                        local_player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+                                        local_player.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
+                                    end
+                                end)
+                                mob_position = mob.HumanoidRootPart.Position
+                                local dist = (mob_position - hrp.Position).Magnitude
+                                print(dist)
+                                if dist < 10 then
+                                    replicated_storage:WaitForChild("remotes"):WaitForChild("swing"):FireServer()
+                                    replicated_storage:WaitForChild("remotes"):WaitForChild("onHit"):FireServer(mob.Humanoid, current_damage(), {}, 0)
+                                else
+                                    -- Teleport back near mob if moved away or fell
+                                    local target_position = mob_position + mob:GetPivot().LookVector * -8
+                                    hrp.CFrame = CFrame.lookAt(target_position, mob_position)
+                                end
+                                task.wait(0.3)
+                            end
+                            if velocity_connection then
+                                velocity_connection:Disconnect()
+                            end
+                        end
+                    end
+                    task.wait(0.1)
                 end
             end)
         end
     end)
+
+    local transdelayslider = Tabs.Main:AddSlider("transdelayslider", {
+        Title = "Next Room Delay",
+        Default = 2,
+        Min = 2,
+        Max = 10,
+        Rounding = 0.1,
+        Callback = function(Value)
+            transdelay = Value
+        end
+    })
 
     local VirtualInputManager = game:GetService("VirtualInputManager")
 
@@ -171,177 +303,22 @@ do
 
     Options.AutoPlayAgain:SetValue(false)
 
-    
-    local goto_closest = false
-    
-    local replicated_storage = cloneref(game:GetService('ReplicatedStorage'))
-    local user_input_service = cloneref(game:GetService('UserInputService'))
-    local local_player = cloneref(game:GetService('Players').LocalPlayer)
-    local tween_service = cloneref(game:GetService('TweenService'))
-    local run_service = cloneref(game:GetService('RunService'))
-    local workspace = cloneref(game:GetService('Workspace'))
+    local autoopenchest = Tabs.Main:AddToggle("autoopenchest", {Title = "Open All Chest", Default = false })
 
-    function closest_mob()
-        local mob = nil
-        local distance = math.huge
-
-        for _, v in next, workspace:GetChildren() do
-            local has_dazed = v:GetAttribute("dazed") ~= nil
-            local has_hadEntrance = v:GetAttribute("hadEntrance") ~= nil
-
-            if v ~= local_player.Character 
-                and v:IsA("Model") 
-                and v:FindFirstChild("Humanoid") 
-                and v.Humanoid.Health > 0 
-                and has_hadEntrance then
-
-                local dist = (v:GetPivot().Position - local_player.Character:GetPivot().Position).Magnitude
-                local mob_root = v:FindFirstChild("HumanoidRootPart")
-                if mob_root then
-                    mob_root.Anchored = true
-                end
-                if dist < distance then
-                    distance = dist
-                    mob = v
-                    print(distance)
+    autoopenchest:OnChanged(function()
+        while Options.autoopenchest.Value do
+            local chest = game:GetService("Players").LocalPlayer.PlayerGui.gameUI.armory.inventory.clip.Loot
+            for _, loot in pairs(chest:GetChildren()) do
+                if string.find(loot.Name, "Chest") then
+                    local args = { loot.Name }
+                    game:GetService("ReplicatedStorage"):WaitForChild("remotes"):WaitForChild("openLoot"):InvokeServer(unpack(args))
                 end
             end
-        end
-        return mob
-    end
-
-    local tweenspeed = 30
-    local distancey = 19
-    local Toggle3 = Tabs.Main:AddToggle("AutoFarm", {
-        Title = "Auto Farm",
-        Default = false
-    })
-
-    Toggle3:OnChanged(function(Value)
-        goto_closest = Value
-        if Value then
-            repeat
-                local six = workspace:FindFirstChild("6")
-                local seven = workspace:FindFirstChild("7")
-                local eight = workspace:FindFirstChild("8")
-                local kingslayer = workspace:FindFirstChild("LumberJack")
-                local twenty = workspace:FindFirstChild("20")
-                local bossroom = workspace:FindFirstChild("BossRoom")
-
-                if workspace.difficulty.Value == "Normal" and six and seven and not kingslayer then
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = seven:GetPivot()
-                    end
-                elseif workspace.difficulty.Value == "Heroic" and seven and eight and not kingslayer then
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = eight:GetPivot()
-                    end
-                end
-
-                local function noEnemyModelsExist()
-                    local forbiddenNames = {
-                        ["Bolt"] = true,
-                        ["Cannon"] = true,
-                        ["CannonGoblin"] = true,
-                        ["Giant"] = true,
-                        ["Mage"] = true
-                    }
-
-                    for _, v in pairs(workspace:GetChildren()) do
-                        if v:IsA("Model") and forbiddenNames[v.Name] then
-                            return false -- one of them exists
-                        end
-                    end
-
-                    return true -- none of them found
-                end
-
-                if twenty and bossroom and noEnemyModelsExist() then
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = bossroom:GetPivot()
-                    end
-                end
-
-                local mob = closest_mob()
-                local cutscene = workspace:FindFirstChild("inCutscene")
-                if mob and cutscene.Value == false then
-                    task.wait(.1)
-                    local velocity_connection = run_service.Heartbeat:Connect(function()
-                        if local_player.Character and local_player.Character:FindFirstChild("HumanoidRootPart") then
-                            local_player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
-                            local_player.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
-                        end
-                    end)
-                    local character = local_player.Character
-                    local hrp = character and character:FindFirstChild("HumanoidRootPart")
-                    if hrp and mob then
-                        local to = mob:GetPivot().Position
-                        local total_distance = (to - hrp.Position).Magnitude
-
-                        if total_distance > 80 then
-                            -- Step 1: Move partway using speed 10 for 3 seconds
-                            
-
-                            -- Step 2: Move the remaining distance at speed 100
-                            local new_to = mob:GetPivot().Position
-                            local remaining_distance = (new_to - hrp.Position).Magnitude
-                            local tween2 = tween_service:Create(hrp, TweenInfo.new(remaining_distance / tweenspeed, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                CFrame = CFrame.new(new_to + Vector3.new(0, distancey, 0))
-                            })
-                            tween2:Play()
-                            tween2.Completed:Wait()
-                        else
-                            -- Move using speed 100 only
-                            local tween_duration = total_distance / tweenspeed
-                            local tween = tween_service:Create(hrp, TweenInfo.new(tween_duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                CFrame = CFrame.new(to + Vector3.new(0, distancey, 0))
-                            })
-                            tween:Play()
-                            tween.Completed:Wait()
-                        end
-                    end
-
-                    if velocity_connection then
-                        velocity_connection:Disconnect()
-                    end
-                end
-                task.wait()
-            until not goto_closest
+            task.wait(0.1)
         end
     end)
-
-
-    local tweenspeedslider = Tabs.Main:AddSlider("tweenspeedslider", {
-        Title = "Tween Speed",
-        Default = 30,
-        Min = 1,
-        Max = 200,
-        Rounding = 0.1,
-        Callback = function(Value)
-            tweenspeed = Value
-        end
-    })
-
-    local distanceslider = Tabs.Main:AddSlider("distanceslider", {
-        Title = "Distance Y from mobs",
-        Description = "If your near or touching the mobs while farming, anti-cheat will kick you",
-        Default = 19,
-        Min = -19,
-        Max = 19,
-        Rounding = 0.1,
-        Callback = function(Value)
-            distancey = Value
-        end
-    })
-
-    Tabs.Main:AddParagraph({
-        Title = "Game is buggy",
-        Content = "Sometimes you will be stuck with the mobs cause you cant hit it. If that happens, just click return to lobby"
-    })
-
+    
+    Options.autoopenchest:SetValue(false)
 
     local selected_dungeon = "Grasslands"
     local dungeons = Tabs.Portal:AddDropdown("dungeons", {
